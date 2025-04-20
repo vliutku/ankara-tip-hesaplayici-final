@@ -81,7 +81,7 @@
       const row = document.createElement("tr");
       row.innerHTML = `
         <td>${name}</td><td>${weight}</td>
-        <td><input type="number" id="score-${index}" min="0" max="100" step="0.1"
+        <td><input type="text" id="score-${index}" min="0" max="100" step="0.1"
           inputmode="decimal" oninput="validateRange(this)"
           onkeydown="handleKey(event, ${index})"></td>`;
       tbody.appendChild(row);
