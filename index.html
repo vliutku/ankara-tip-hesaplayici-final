@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Ankara Tıp Not Hesaplama</title>
+  <style>
+    :root {
+      --bg: #f9f9f9; --text: #000; --table: #fff; --border: #ccc; --button-bg: #7f1d1d;
+      --progress-red: #dc2626; --progress-yellow: #f59e0b; --progress-green: #16a34a;
+    }
+    body.dark {
+      --bg: #121212; --text: #fff; --table: #1e1e1e; --border: #444;
+    }
+    body {
+      font-family: Arial, sans-serif; background-color: var(--bg); color: var(--text);
+      margin: 0; padding: 20px; max-width: 600px; margin-left: auto; margin-right: auto;
+    }
+    .logo { display: block; margin: 0 auto 10px; width: 120px; }
+    h1 { font-size: 24px; text-align: center; margin-bottom: 20px; }
+    .controls { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px; }
+    input[type="number"], select {
+      padding: 8px; font-size: 16px; width: 200px;
+      background-color: #fff; color: #000; border: 1px solid var(--border); border-radius: 4px;
+    }
+    body.dark input[type="number"] {
+      background-color: #2c2c2c !important; color: #fff !important;
+      -webkit-appearance: none; appearance: none;
+    }
+    thead tr th { background-color: #7f1d1d; color: white; }
+    table { border-collapse: collapse; width: 100%; background: var(--table); }
+    th, td { border: 1px solid var(--border); padding: 10px; text-align: left; font-size: 15px; }
+    button {
+      width: 100%; padding: 12px; font-size: 16px; margin-top: 20px;
+      background-color: var(--button-bg); color: white; border: none; border-radius: 4px;
+    }
+    .result { margin-top: 25px; font-weight: bold; font-size: 16px; text-align: center; line-height: 1.6; }
+    .pass { color: #00cc66; font-size: 20px; margin-top: 15px; text-align: center; }
+    .fail { color: #ff5050; font-size: 20px; margin-top: 15px; text-align: center; }
+    .toggle {
+      background: none; border: 1px solid var(--border); color: var(--text);
+      padding: 6px 10px; border-radius: 5px; cursor: pointer;
+    }
+    .progress-container {
+      width: 100%; background-color: #ddd; border-radius: 10px; margin-top: 25px; height: 25px; overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%; text-align: center; line-height: 25px; font-weight: bold; color: white; border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div style="position: absolute; top: 8px; right: 12px; font-size: 12px; color: gray; opacity: 0.7;">Vli</div>
+  <img src="E6CB205A-53AE-4A4A-A516-BA6109CF04BA.png" class="logo" alt="Ankara Tıp Logosu" />
+  <h1>Ankara Tıp Not Hesaplama</h1>
+  <div class="controls">
+    <label>Hedef Not:
+      <input type="number" id="targetScore" value="60" min="60" max="100" step="1" inputmode="numeric" pattern="[0-9]+" oninput="validateTarget(this)" />
+    </label>
+    <button class="toggle" onclick="toggleDark()" id="themeToggle">Karanlık Tema</button>
+  </div>
+  <table>
+    <thead><tr><th>Sınav</th><th>Ağırlık (%)</th><th>Notun</th></tr></thead>
+    <tbody id="table-body"></tbody>
+  </table>
+  <button onclick="calculate()">Hesapla</button>
+  <div class="result" id="result"></div>
+  <div id="progressWrapper" class="progress-container" style="display:none;">
+    <div id="progressBar" class="progress-bar">0%</div>
+  </div>
+  <div id="status"></div>
+  <script>
+    const components = [
+      ["M1 teorik", 6], ["M2 teorik", 6], ["M3 teorik", 6], ["M4 teorik", 6],
+      ["NYUS 1+2", 5.6], ["NYUS 3", 4.2], ["NYUS 4", 4.2], ["NYKS", 1],
+      ["PDÖ", 1], ["Final Teorik", 36], ["Final Pratik", 24], ["Gelişim Notu", 5]
+    ];
+    const tbody = document.getElementById("table-body");
+    components.forEach(([name, weight], index) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${name}</td><td>${weight}</td>
+        <td><input type="number" id="score-${index}" min="0" max="100" step="0.1"
+          inputmode="decimal" pattern="[0-9]*" oninput="validateRange(this)"
+          onkeydown="handleKey(event, ${index})"></td>`;
+      tbody.appendChild(row);
+    });
+    function calculate() {
+      const target = parseInt(document.getElementById("targetScore").value) || 60;
+      let totalContribution = 0, remainingWeight = 0;
+      components.forEach(([_, weight], index) => {
+        const input = document.getElementById(`score-${index}`), value = parseFloat(input.value);
+        if (!isNaN(value)) totalContribution += value * weight / 100;
+        else remainingWeight += weight;
+      });
+      let neededPoint = target - totalContribution; if (neededPoint < 0) neededPoint = 0;
+      const neededAverage = remainingWeight > 0 ? (neededPoint / remainingWeight) * 100 : 0;
+      document.getElementById("result").innerHTML = `
+        ✅ Şu ana kadar puanın: <b>${totalContribution.toFixed(2)}</b><br>
+        🎯 Hedef not: <b>${target}</b><br>
+        ❗ Kalan puan: <b>${neededPoint.toFixed(2)}</b><br>
+        📊 Gerekli ortalama: <b>${neededAverage.toFixed(2)}</b>`;
+      const status = document.getElementById("status"), progress = Math.min((totalContribution / target) * 100, 100);
+      const progressBar = document.getElementById("progressBar"), progressWrapper = document.getElementById("progressWrapper");
+      progressWrapper.style.display = "block"; progressBar.style.width = progress + "%"; progressBar.innerText = Math.floor(progress) + "%";
+      if (target < 60) { document.getElementById("targetScore").value = 60; return; }
+      if (totalContribution >= 60 && totalContribution < target) {
+        status.innerHTML = "<div class='pass'>🟢 Geçtin ama hedef başarısız.</div>";
+        progressBar.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--progress-yellow');
+      } else if (totalContribution >= target) {
+        status.innerHTML = "<div class='pass'>🟢 Tebrikler, geçtin ve hedef başarılı!</div>";
+        progressBar.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--progress-green');
+      } else {
+        status.innerHTML = "<div class='fail'>🔴 Kaldın</div>";
+        progressBar.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--progress-red');
+      }
+    }
+    function handleKey(event, index) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const nextInput = document.getElementById(`score-${index + 1}`);
+        if (nextInput) nextInput.focus();
+        else calculate();
+      }
+    }
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+      const btn = document.getElementById("themeToggle");
+      btn.textContent = document.body.classList.contains("dark") ? "Aydınlık Tema" : "Karanlık Tema";
+    }
+    function validateRange(input) {
+      input.value = input.value.replace(/[^0-9.]/g, "");
+      if (parseFloat(input.value) > 100) input.value = 100;
+      if (parseFloat(input.value) < 0) input.value = 0;
+    }
+    
+    function validateTarget(input) {
+      input.value = input.value.replace(/[^0-9]/g, "");
+      if (input.value === "") return;
+      let val = Number(input.value);
+      if (!Number.isInteger(val)) val = Math.round(val);
+      if (val < 60) val = 60;
+      if (val > 100) val = 100;
+      input.value = val;
+    
+      input.value = input.value.replace(/[^0-9]/g, "");
+      let val = parseInt(input.value); if (isNaN(val)) val = 60;
+      if (val < 60) val = 60; if (val > 100) val = 100; input.value = val;
+    }
+  </script>
+</body>
+</html>
