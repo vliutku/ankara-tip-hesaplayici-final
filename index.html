@@ -162,6 +162,14 @@ body:not(.dark) input[type="text"] {
       if (parseFloat(input.value) > 100) input.value = 100;
       if (parseFloat(input.value) < 0) input.value = 0;
     }
+    function validateTarget(input) {
+  input.value = input.value.replace(/[^0-9]/g, "");  // Nokta, harf silinir
+  let val = parseInt(input.value);
+  if (isNaN(val)) val = 60;
+  if (val < 60) val = 60;
+  if (val > 100) val = 100;
+  input.value = val;
+}
   </script>
 </body>
 </html>
