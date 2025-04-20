@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ankara Tıp Not Hesaplama</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      background-color: #fff;
+      color: #000;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.dark {
+      background-color: #121212;
+      color: #fff;
+    }
+
+    .dark input[type="number"], .dark input[type="text"] {
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #555;
+    }
+
+    .dark .header, .dark th {
+      background-color: #7a1e1e;
+      color: #fff;
+    }
+
+    .logo {
+      max-width: 100px;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #999;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #7a1e1e;
+      color: white;
+    }
+
+    .result, .status {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+
+    .status {
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+
+    .pass {
+      color: #4CAF50;
+    }
+
+    .fail {
+      color: #f44336;
+    }
+
+    #footer {
+      position: fixed;
+      top: 10px;
+      right: 15px;
+      font-size: 0.8em;
+      color: gray;
+    }
+
+    input[type="number"] {
+      width: 70px;
+      padding: 5px;
+      font-size: 1em;
+    }
+
+    .button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #7a1e1e;
+      color: white;
+      border: none;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    .theme-toggle {
+      margin: 10px auto;
+      padding: 6px;
+      max-width: 200px;
+      font-size: 1em;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="footer">Vli</div>
+  <img src="https://vliutku.github.io/Ankara-T-p-Not-Hesaplay-c/logo.png" alt="Logo" class="logo">
+  <h2>Ankara Tıp Not Hesaplama</h2>
+  <label for="target">Hedef Not:</label>
+  <input type="number" id="target" min="60" max="100" value="60">
+  <br>
+  <button class="theme-toggle" onclick="toggleTheme()">Karanlık Tema</button>
+  <table>
+    <thead>
+      <tr>
+        <th>Sınav</th>
+        <th>Ağırlık (%)</th>
+        <th>Notun</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+  <button class="button" onclick="calculate()">Hesapla</button>
+  <div id="result" class="result"></div>
+  <div id="status" class="status"></div>
+
+  <script>
+    const components = [
+      ["M1 teorik", 6], ["M2 teorik", 6], ["M3 teorik", 6], ["M4 teorik", 6],
+      ["NYUS 1+2", 5.6], ["NYUS 3", 4.2], ["NYUS 4", 4.2],
+      ["NYKS", 1], ["PDÖ", 1],
+      ["Final Teorik", 36], ["Final Pratik", 24],
+      ["Gelişim Notu", 5]
+    ];
+
+    const tbody = document.getElementById("table-body");
+
+    components.forEach(([name, weight], index) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${name}</td>
+        <td>${weight}</td>
+        <td><input type="number" id="score-${index}" min="0" max="100"></td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      const btn = document.querySelector('.theme-toggle');
+      btn.innerText = document.body.classList.contains("dark") ? "Aydınlık Tema" : "Karanlık Tema";
+    }
+
+    function calculate() {
+      const target = parseInt(document.getElementById("target").value);
+      if (isNaN(target) || target < 60 || target > 100) {
+        alert("Hedef not 60 ile 100 arasında olmalıdır.");
+        return;
+      }
+
+      let total = 0;
+      let totalWeight = 0;
+      let knownWeight = 0;
+
+      components.forEach(([_, weight], index) => {
+        const input = document.getElementById(`score-${index}`);
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) {
+          total += val * weight / 100;
+          knownWeight += weight;
+        }
+        totalWeight += weight;
+      });
+
+      const remainingWeight = totalWeight - knownWeight;
+      const remainingContribution = target - total;
+
+      const result = document.getElementById("result");
+      const status = document.getElementById("status");
+
+      let message = `Şu ana kadar puanın: ${total.toFixed(2)}<br>`;
+      if (remainingWeight > 0) {
+        const requiredAvg = remainingContribution / remainingWeight * 100;
+        const kalanPuan = (target - total).toFixed(2);
+        message += `Geçmek için kalan puan: ${kalanPuan < 0 ? 0 : kalanPuan}<br>`;
+        message += `Geriye kalan sınavlardan gereken ortalama: ${requiredAvg.toFixed(2)}`;
+      }
+
+      result.innerHTML = message;
+
+      if (total >= 60) {
+        if (target === 60) {
+          status.innerHTML = `<div class="pass">Tebrikler, geçtin!</div>`;
+        } else if (total >= target) {
+          status.innerHTML = `<div class="pass">Tebrikler, geçtin! Hedef başarıyla tamamlandı.</div>`;
+        } else {
+          status.innerHTML = `<div class="pass">Tebrikler, geçtin! Ama hedef başarısız.</div>`;
+        }
+      } else {
+        status.innerHTML = `<div class="fail">Kaldın</div>`;
+      }
+    }
+  </script>
+</body>
+</html>
