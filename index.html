@@ -69,7 +69,9 @@ body:not(.dark) input[type="text"] {
   <h1>Ankara Tıp Not Hesaplama</h1>
   <div class="controls">
     <label>Hedef Not:
-      <input type="number" id="targetScore" value="60" min="60" max="100" step="1" inputmode="numeric" pattern="[0-9]*" />
+     <input type="number" id="targetScore" value="60"
+       min="60" max="100" step="1" inputmode="numeric"
+       oninput="validateTarget(this)">
     </label>
     <button class="toggle" onclick="toggleDark()" id="themeToggle">Karanlık Tema</button>
   </div>
