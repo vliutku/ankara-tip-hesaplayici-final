@@ -126,6 +126,11 @@ let finalPracticalScore = 0;
 
   return sum + (v * w / 100);
 }, 0);
+if (finalTheoreticalScore < 50 || finalPracticalScore < 50) {
+  document.getElementById("result").innerHTML = "Kaldınız (final teorik veya pratik 50'nin altında)";
+  document.getElementById("result").style.color = "#f87171";
+  return;
+}
       const remainingWeight = components.reduce((sum, [_, w], i) => {
         return sum + (isNaN(parseFloat(document.getElementById(`score-${i}`).value)) ? w : 0);
       }, 0);
