@@ -6,19 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>Ankara Tıp Not Hesaplama</title>
   <style>
-  input[type="text"] {
-  background-color: #2e2e2e;       
-  color: #ffffff;                  
-  border: 1px solid #777;
-  border-radius: 5px;
-  padding: 4px 8px;
-  width: 80px;
-}
-body:not(.dark) input[type="text"] {
-  background-color: #f2f2f2;
-  color: #000;
-  border: 1px solid #ccc;
-}
+    input[type="text"] {
+      background-color: #2e2e2e;       
+      color: #ffffff;                  
+      border: 1px solid #777;
+      border-radius: 5px;
+      padding: 4px 8px;
+      width: 80px;
+    }
+    body:not(.dark) input[type="text"] {
+      background-color: #f2f2f2;
+      color: #000;
+      border: 1px solid #ccc;
+    }
     :root {
       --bg: #f9f9f9; --text: #000; --table: #fff; --border: #ccc; --button-bg: #7f1d1d;
       --progress-red: #dc2626; --progress-yellow: #f59e0b; --progress-green: #16a34a;
@@ -64,35 +64,43 @@ body:not(.dark) input[type="text"] {
   </style>
 </head>
 <body>
-  <div style="position: absolute; top: 8px; right: 12px; font-size: 12px; color: gray; opacity: 0.7;">Ali U. - 2030 Mezunları</div>
+  <!-- Sol üst köşeye eklenen tarih -->
+  <div style="position: absolute; top: 8px; left: 12px; font-size: 12px; color: gray; opacity: 0.7;">
+    Nisan 2025
+  </div>
+  <!-- Mevcut sağ üst köşe bilgisi -->
+  <div style="position: absolute; top: 8px; right: 12px; font-size: 12px; color: gray; opacity: 0.7;">
+    Ali U. - 2030 Mezunları
+  </div>
+
   <img src="E6CB205A-53AE-4A4A-A516-BA6109CF04BA.png" class="logo" alt="Ankara Tıp Logosu" />
   <h1>Ankara Tıp Not Hesaplayıcısı</h1>
   <div class="controls">
     <label>Hedef Not:
-  <input
-  id="targetScore"
-  type="text"
-  value="60"
-  inputmode="numeric"
-  onblur="validateTarget(this)"
-  placeholder="60–100 arası tam sayı">
+      <input
+        id="targetScore"
+        type="text"
+        value="60"
+        inputmode="numeric"
+        onblur="validateTarget(this)"
+        placeholder="60–100 arası tam sayı">
     </label>
     <button class="toggle" onclick="toggleDark()" id="themeToggle">Karanlık Tema</button>
   </div>
   <table>
     <thead><tr><th>Sınav</th><th>Ağırlık (%)</th><th>Notun</th></tr></thead>
     <tbody id="table-body"></tbody>
-   
-</p>
   </table>
-   <p style="font-size: 0.8rem; color: gray; margin-top: 10px;">
-  * Lütfen Gelişim Notunu 100 üzerinden oranlayarak giriniz; mesela 20 soru var 10 yaptınız 50 yazınız.
+  <p style="font-size: 0.8rem; color: gray; margin-top: 10px;">
+    * Lütfen Gelişim Notunu 100 üzerinden oranlayarak giriniz; mesela 20 soru var 10 yaptınız 50 yazınız.
+  </p>
   <button onclick="calculate()">Hesapla</button>
   <div class="result" id="result"></div>
   <div id="progressWrapper" class="progress-container" style="display:none;">
     <div id="progressBar" class="progress-bar">0%</div>
   </div>
   <div id="status"></div>
+
   <script>
     const components = [
       ["M1 teorik", 6], ["M2 teorik", 6], ["M3 teorik", 6], ["M4 teorik", 6],
@@ -109,39 +117,53 @@ body:not(.dark) input[type="text"] {
           onkeydown="handleKey(event, ${index})"></td>`;
       tbody.appendChild(row);
     });
+
     function calculate() {
       let finalTheoreticalScore = 0;
-let finalPracticalScore = 0;
-      
+      let finalPracticalScore = 0;
+
+      // Hedef not
       let target = parseInt(document.getElementById("targetScore").value);
       if (isNaN(target)) target = 60;
       if (target < 60) target = 60;
       if (target > 100) target = 100;
+
+      // Toplam katkı
       const totalContribution = components.reduce((sum, [name, w], i) => {
-  const value = parseFloat(document.getElementById(`score-${i}`).value);
-  const v = isNaN(value) ? 0 : value;
-
-  if (name === "Final Teorik") finalTheoreticalScore = v;
-  if (name === "Final Pratik") finalPracticalScore = v;
-
-  return sum + (v * w / 100);
-}, 0);
-if (finalTheoreticalScore < 50 || finalPracticalScore < 50) {
-  document.getElementById("result").innerHTML = "Kaldınız (final teorik veya pratik 50'nin altında)";
-  document.getElementById("result").style.color = "#f87171";
-  return;
-}
-      const remainingWeight = components.reduce((sum, [_, w], i) => {
-        return sum + (isNaN(parseFloat(document.getElementById(`score-${i}`).value)) ? w : 0);
+        const raw = document.getElementById(`score-${i}`).value;
+        const value = parseFloat(raw);
+        const v = isNaN(value) ? 0 : value;
+        if (i === 9) finalTheoreticalScore = v; // Final Teorik
+        if (i === 10) finalPracticalScore = v;  // Final Pratik
+        return sum + (v * w / 100);
       }, 0);
+
+      // Final alanları gerçekten doldurulduysa 50 altıysa başarısız
+      const finalTheoRaw = document.getElementById("score-9").value.trim();
+      const finalPraRaw = document.getElementById("score-10").value.trim();
+      if ((finalTheoRaw !== "" && finalTheoreticalScore < 50) ||
+          (finalPraRaw !== "" && finalPracticalScore < 50)) {
+        document.getElementById("result").innerHTML = "Kaldınız (final teorik veya pratik 50'nin altında)";
+        document.getElementById("result").style.color = "#f87171";
+        return;
+      }
+
+      // Kalan ağırlık
+      const remainingWeight = components.reduce((sum, [_, w], i) => {
+        const raw = document.getElementById(`score-${i}`).value;
+        return sum + (raw.trim() === "" ? w : 0);
+      }, 0);
+
       let neededPoint = target - totalContribution;
       if (neededPoint < 0) neededPoint = 0;
       const neededAverage = remainingWeight > 0 ? (neededPoint / remainingWeight) * 100 : 0;
+
       document.getElementById("result").innerHTML = `
         ✅ Şu ana kadar puanın: <b>${totalContribution.toFixed(2)}</b><br>
         🎯 Hedef not: <b>${target}</b><br>
         ❗ Kalan puan: <b>${neededPoint.toFixed(2)}</b><br>
         📊 Kalan tüm sınavlarda alınması gereken ortalama puan: <b>${neededAverage.toFixed(2)}</b>`;
+
       const status = document.getElementById("status"),
             progress = Math.min((totalContribution / target) * 100, 100),
             progressBar = document.getElementById("progressBar"),
@@ -149,6 +171,7 @@ if (finalTheoreticalScore < 50 || finalPracticalScore < 50) {
       progressWrapper.style.display = "block";
       progressBar.style.width = progress + "%";
       progressBar.innerText = Math.floor(progress) + "%";
+
       if (totalContribution >= 60 && totalContribution < target) {
         status.innerHTML = "<div class='pass'>🟢 Geçtin ama hedef başarısız.</div>";
         progressBar.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--progress-yellow');
@@ -160,6 +183,7 @@ if (finalTheoreticalScore < 50 || finalPracticalScore < 50) {
         progressBar.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--progress-red');
       }
     }
+
     function handleKey(event, index) {
       if (event.key === "Enter") {
         event.preventDefault();
@@ -168,26 +192,28 @@ if (finalTheoreticalScore < 50 || finalPracticalScore < 50) {
         else calculate();
       }
     }
+
     function toggleDark() {
       document.body.classList.toggle("dark");
       document.getElementById("themeToggle").textContent =
         document.body.classList.contains("dark") ? "Aydınlık Tema" : "Karanlık Tema";
     }
+
     function validateRange(input) {
       input.value = input.value.replace(/,/g, ".");
       input.value = input.value.replace(/[^0-9.]/g, "");
       if (parseFloat(input.value) > 100) input.value = 100;
       if (parseFloat(input.value) < 0) input.value = 0;
     }
+
     function validateTarget(input) {
-  input.value = input.value.replace(/[^0-9]/g, "");  
-  let val = parseInt(input.value);
-  if (isNaN(val)) val = 60;
-  if (val < 60) val = 60;
-  if (val > 100) val = 100;
-  input.value = val;
-}
-    
+      input.value = input.value.replace(/[^0-9]/g, "");
+      let val = parseInt(input.value);
+      if (isNaN(val)) val = 60;
+      if (val < 60) val = 60;
+      if (val > 100) val = 100;
+      input.value = val;
+    }
   </script>
 </body>
 </html>
